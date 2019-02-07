@@ -1,16 +1,20 @@
 #!/usr/bin/env python
 
 import tkinter as tk
-from tkinter import font
-from tkinter import messagebox
+import tkFont
 import tkMessageBox
 import random
 import numpy as np
 import sys
 
-CELL_COLOR_DICT = { 2:"#82c3b8", 4:"#d6ad7c", 8:"#ffc125", 16:"#d89000", \
-                    32:"#a04c03", 64:"#704013", 128:"#990000", 256:"#800000", 512:"#4b052e", \
-					1024:"#4d0203", 2048:"#101010" }
+CELL_COLOR_DICT = { 2:"#776e65", 4:"#776e65", 8:"#f9f6f2", 16:"#f9f6f2", \
+                    32:"#f9f6f2", 64:"#f9f6f2", 128:"#f9f6f2", 256:"#f9f6f2", \
+					512:"#f9f6f2", 1024:"#f9f6f2", 2048:"#f9f6f2" }
+BACKGROUND_COLOR_DICT = {   2:"#eee4da", 4:"#ede0c8", 8:"#f2b179", 16:"#f59563", \
+                    32:"#f67c5f", 64:"#f65e3b", 128:"#edcf72", 256:"#edcc61", \
+					512:"#edc850", 1024:"#edc53f", 2048:"#edc22e" }
+BACKGROUND_COLOR_CELL_EMPTY = "#9e948a"
+
 
 window=tk.Tk()
 window.title("2048")
@@ -20,7 +24,7 @@ canvas = tk.Canvas(window,height=400,width=400)
 def initial():
 	for i in range(4):
 		for j in range(4):
-			tile = canvas.create_rectangle(0+i*100,0+j*100,100+i*100,100+j*100,fill='white')
+			tile = canvas.create_rectangle(0+i*100,0+j*100,100+i*100,100+j*100,fill=BACKGROUND_COLOR_CELL_EMPTY)
 	text=[]
 	for i in range(4):
 		text.append([None] * 4)
@@ -29,7 +33,7 @@ def initial():
 		x=random.randint(0,15)
 		i,j=x%4,x/4
 		if text[i][j]==None:
-			tex = canvas.create_text((50+j*100,50+i*100),font=fo,text=str(2))
+			tex = canvas.create_text((50+j*100,50+i*100),font=fo,text=str(2), fill=CELL_COLOR_DICT[2])
 			text[i][j]=2
 			c+=1
 		if(c==2):
@@ -37,18 +41,18 @@ def initial():
 	return text
 
 def move_left(event):
-	global text
-	text=compress(text)
-	text=merge(text)
-	text=compress(text)
-	text=grid(text)
+	global text,total
+	mat=compress(text)
+	mat=merge(mat)
+	mat=compress(mat)
+	text=grid(mat)
 	
 	text=add_one(text)
 	color()
 	check()
 
 def move_right(event):
-	global text
+	global text,total
 	mat=np.fliplr(text)
 	mat=compress(mat)
 	mat=merge(mat)
@@ -63,7 +67,7 @@ def move_right(event):
 	check()
 
 def move_up(event):
-	global text
+	global text,total
 	mat=transpose(text)
 	mat=compress(mat)
 	mat=merge(mat)
@@ -78,7 +82,7 @@ def move_up(event):
 	check()
 
 def move_down(event):
-	global text
+	global text,total
 	mat=transpose(text)
 	mat=np.fliplr(mat)
 	mat=compress(mat)
@@ -98,8 +102,8 @@ def color():
 	for i in range(4):
 		for j in range(4):
 			if text[i][j]!=None:
-				tile = canvas.create_rectangle(0+j*100,0+i*100,100+j*100,100+i*100,fill=CELL_COLOR_DICT[text[i][j]])
-				tex = canvas.create_text((50+j*100,50+i*100),font=fo,text=str(text[i][j]))
+				tile = canvas.create_rectangle(0+j*100,0+i*100,100+j*100,100+i*100,fill=BACKGROUND_COLOR_DICT[text[i][j]])
+				tex = canvas.create_text((50+j*100,50+i*100),font=fo,text=str(text[i][j]), fill=CELL_COLOR_DICT[text[i][j]])
 
 def add_one(mat):
 	k=0
@@ -110,7 +114,7 @@ def add_one(mat):
 			tex = canvas.create_text((50+j*100,50+i*100),font=fo,text=str(2))
 			mat[i][j]=2
 			k+=1
-		if(k==1):
+		if k==1:
 			return mat
 
 def transpose(mat):
@@ -125,7 +129,7 @@ def clear(mat):
 	for i in range(4):
 		for j in range(4):
 			if mat[i][j]==None:
-				tile = canvas.create_rectangle(0+j*100,0+i*100,100+j*100,100+i*100,fill='white')
+				tile = canvas.create_rectangle(0+j*100,0+i*100,100+j*100,100+i*100,fill=BACKGROUND_COLOR_CELL_EMPTY)
 	return mat
 
 def compress(mat):
@@ -136,20 +140,22 @@ def compress(mat):
 		for j in range(4):
 			if mat[i][j]!=None:
 				new[i][count]=mat[i][j]
-				tile = canvas.create_rectangle(0+j*100,0+i*100,100+j*100,100+i*100,fill='white')
+				tile = canvas.create_rectangle(0+j*100,0+i*100,100+j*100,100+i*100,fill=BACKGROUND_COLOR_CELL_EMPTY)
 				if j!=count:
 					done=True
 				count+=1
 	return new
 
 def merge(mat):
+	global total
 	done=False
 	for i in range(4):
 		for j in range(3):
 			if mat[i][j]==mat[i][j+1] and mat[i][j]!=None:
 				mat[i][j]*=2
-				tile = canvas.create_rectangle(0+j*100,0+i*100,100+j*100,100+i*100,fill='white')
-				tile = canvas.create_rectangle(0+(j+1)*100,0+i*100,100+(j+1)*100,100+i*100,fill='white')
+				total+=mat[i][j]
+				tile = canvas.create_rectangle(0+j*100,0+i*100,100+j*100,100+i*100,fill=BACKGROUND_COLOR_CELL_EMPTY)
+				tile = canvas.create_rectangle(0+(j+1)*100,0+i*100,100+(j+1)*100,100+i*100,fill=BACKGROUND_COLOR_CELL_EMPTY)
 				mat[i][j+1]=None
 				done=True
 	return mat
@@ -162,7 +168,7 @@ def grid(mat):
 	return mat
 
 def check():
-	global text
+	global text,total
 	x=0
 	for i in range(4):
 		for j in range(4):
@@ -172,18 +178,20 @@ def check():
 			if text[i][j]!=None:
 				x+=1
 	if x==16:
-		answer = messagebox.askyesno("Congrats! You completed the game.","Do you want to try again?")
+		answer = tkMessageBox.askyesno("Congrats! You completed the game.","Your score was: "+str(total)+"\nDo you want to try again?")
 		if answer==True:
 			text=initial()
 			color()
+			total=0
 		else:
 			sys.exit(0)
 
-fo=font.Font(family='Purisa',size=14,weight='bold')
+fo=tkFont.Font(family='Verdana',size=14,weight='bold')
 
 
 text = initial()
 color()
+total = 0
 
 window.bind('<Left>',move_left)
 window.bind('<Right>',move_right)
